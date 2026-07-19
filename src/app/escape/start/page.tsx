@@ -6,8 +6,9 @@ import { motion } from "framer-motion";
 import SurveyStep from "@/components/escape/SurveyStep";
 import TripTypeStep from "@/components/escape/TripTypeStep";
 import LoadingSequence from "@/components/escape/LoadingSequence";
-import RevealSequence from "@/components/escape/RevealSequence";
-import { deriveTrip } from "@/lib/escape/deriveTrip";
+import MysteryBagReveal from "@/components/escape/MysteryBagReveal";
+import { scoreArchetype } from "@/lib/escape/archetypes";
+import { recommend, preferencesToInput, type Recommendation } from "@/lib/escape/recommend";
 import { encodeTrip } from "@/lib/escape/tripEncoding";
 import type { EscapeProfile, SurveyAnswers, TripPreferences, TripResult } from "@/lib/escape/types";
 
@@ -18,7 +19,8 @@ export default function EscapeStartPage() {
   const [stage, setStage] = useState<Stage>("survey");
   const [answers, setAnswers] = useState<SurveyAnswers | null>(null);
   const [profile, setProfile] = useState<EscapeProfile | null>(null);
-  const [trip, setTrip] = useState<TripResult | null>(null);
+  const [preferences, setPreferences] = useState<TripPreferences | null>(null);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
 
   const handleSurveyComplete = (finishedAnswers: SurveyAnswers, finishedProfile: EscapeProfile) => {
     setAnswers(finishedAnswers);
@@ -26,18 +28,29 @@ export default function EscapeStartPage() {
     setStage("trip-type");
   };
 
-  const handleTripTypeComplete = (preferences: TripPreferences) => {
+  const handleTripTypeComplete = (finishedPreferences: TripPreferences) => {
     if (!answers) return;
-    setTrip({ answers, preferences, profile: profile ?? undefined, createdAt: Date.now() });
+    setPreferences(finishedPreferences);
+    const archetypeId = scoreArchetype(answers);
+    const result = recommend(preferencesToInput(finishedPreferences, archetypeId));
+    setRecommendations(result.recommendations);
     setStage("loading");
   };
 
-  const handleRevealComplete = () => {
-    if (!trip) return;
+  const handlePick = (recommendation: Recommendation) => {
+    if (!answers || !preferences) return;
+    const trip: TripResult = {
+      answers,
+      preferences,
+      destinationId: recommendation.destination.id,
+      planId: recommendation.plan.id,
+      hotelId: recommendation.hotel.id,
+      profile: profile ?? undefined,
+      createdAt: Date.now(),
+    };
     router.push(`/escape/trip?d=${encodeTrip(trip)}`);
   };
 
-  const derived = trip ? deriveTrip(trip) : null;
   const isWarmStage = stage === "survey" || stage === "trip-type";
 
   if (isWarmStage) {
@@ -79,12 +92,12 @@ export default function EscapeStartPage() {
         className="w-full"
       >
         {stage === "loading" && <LoadingSequence onComplete={() => setStage("reveal")} />}
-        {stage === "reveal" && derived && (
-          <RevealSequence
-            archetypeId={derived.archetypeId}
-            destinationId={derived.destinationId}
-            answers={derived.answers}
-            onComplete={handleRevealComplete}
+        {stage === "reveal" && preferences && (
+          <MysteryBagReveal
+            recommendations={recommendations}
+            preferences={preferences}
+            onPick={handlePick}
+            onAdjust={() => setStage("trip-type")}
           />
         )}
       </motion.div>

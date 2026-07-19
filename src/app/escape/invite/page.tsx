@@ -8,10 +8,9 @@ import Link from "next/link";
 import { decodeTrip } from "@/lib/escape/tripEncoding";
 import { deriveTrip } from "@/lib/escape/deriveTrip";
 import { ARCHETYPES } from "@/lib/escape/archetypes";
-import { DESTINATIONS } from "@/lib/escape/destinations";
-import { buildItinerary } from "@/lib/escape/itinerary";
-import { calculateCost } from "@/lib/escape/costCalculator";
-import { nextWeekend, formatDateRange } from "@/lib/escape/dates";
+import { CATALOG_BY_ID } from "@/lib/escape/data/catalog";
+import { calculateTripCost } from "@/lib/escape/costCalculator";
+import { availabilityWindow } from "@/lib/escape/dates";
 import type { Accommodation, TripResult } from "@/lib/escape/types";
 
 type Status = "loading" | "ready" | "joining" | "success" | "invalid";
@@ -25,7 +24,7 @@ function InviteContent() {
 
   useEffect(() => {
     const decoded = decodeTrip(encoded);
-    if (!decoded) {
+    if (!decoded || !decoded.destinationId || !decoded.planId) {
       setStatus("invalid");
       return;
     }
@@ -33,11 +32,15 @@ function InviteContent() {
   }, [encoded]);
 
   const derived = trip ? deriveTrip(trip) : null;
+  const destination = derived ? CATALOG_BY_ID[derived.destinationId] : null;
+  const window_ = derived
+    ? availabilityWindow(derived.preferences.availabilityStart, derived.preferences.availabilityEnd)
+    : null;
 
   useEffect(() => {
-    if (!derived) return;
+    if (!derived || !destination || !window_) return;
     fetch(
-      `/api/escape/accommodation?destination=${derived.destinationId}&adults=${derived.preferences.groupSize}`,
+      `/api/escape/accommodation?destination=${derived.destinationId}&adults=${derived.preferences.groupSize}&checkin=${window_.checkin}&checkout=${window_.checkout}&hotel=${derived.hotelId}`,
     )
       .then((res) => res.json())
       .then((data) => {
@@ -46,7 +49,7 @@ function InviteContent() {
       })
       .catch(() => setStatus("ready"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [derived?.destinationId, derived?.preferences.groupSize]);
+  }, [derived?.destinationId, derived?.hotelId]);
 
   const handleJoin = () => {
     setStatus("joining");
@@ -55,7 +58,7 @@ function InviteContent() {
 
   if (status === "invalid") {
     return (
-      <div className="min-h-screen flex items-center justify-center text-center p-8">
+      <div className="min-h-screen bg-[#0a0a0b] text-[#f5f5f4] flex items-center justify-center text-center p-8">
         <div className="space-y-3">
           <p className="text-[#f87171]">This invite link is invalid or expired.</p>
           <Link href="/escape" className="text-sm" style={{ color: "#dcff73" }}>
@@ -67,11 +70,22 @@ function InviteContent() {
   }
 
   const archetype = derived ? ARCHETYPES[derived.archetypeId] : null;
-  const destination = derived ? DESTINATIONS[derived.destinationId] : null;
-  const itinerary = derived ? buildItinerary(derived.destinationId, derived.archetypeId) : [];
-  const cost = accommodation && derived ? calculateCost(accommodation, derived.preferences.groupSize) : null;
-  const { checkin, checkout } = nextWeekend();
-  const dateRange = formatDateRange(checkin, checkout);
+  const plan = destination && derived
+    ? destination.plans.find((p) => p.id === derived.planId) ?? destination.plans[0]
+    : null;
+  const chosenHotel = destination && derived
+    ? destination.hotels.find((h) => h.id === derived.hotelId) ?? destination.hotels[1]
+    : null;
+  const cost =
+    destination && derived && plan && window_
+      ? calculateTripCost({
+          nightlyPrice: accommodation?.pricePerNightTotal ?? chosenHotel?.nightlyPrice ?? 0,
+          nights: window_.nights,
+          groupSize: derived.preferences.groupSize,
+          transportPerPerson: destination.estTransportCostPerPerson,
+          plan,
+        })
+      : null;
 
   return (
     <div className="min-h-screen bg-[#0a0a0b] text-[#f5f5f4] flex flex-col items-center justify-center p-6 relative selection:bg-[#dcff73]/30">
@@ -86,7 +100,7 @@ function InviteContent() {
         transition={{ duration: 0.4 }}
         className="w-full max-w-sm"
       >
-        {(status === "loading") && (
+        {status === "loading" && (
           <div className="flex flex-col items-center gap-4">
             <div
               className="w-10 h-10 rounded-full border-2 animate-spin"
@@ -96,7 +110,7 @@ function InviteContent() {
           </div>
         )}
 
-        {status === "ready" && derived && archetype && destination && (
+        {status === "ready" && derived && archetype && destination && plan && window_ && (
           <div
             className="rounded-3xl p-8 space-y-6"
             style={{
@@ -115,34 +129,42 @@ function InviteContent() {
                   : "you're invited on a mystery escape"}
               </p>
               <h1 className="text-2xl font-serif font-light text-white">{destination.name}</h1>
-              <p className="text-sm text-[#a1a1aa]">{dateRange}</p>
-              <p className="text-xs text-[#71717a]">{archetype.name} vibe · {derived.preferences.vibe}</p>
+              <p className="text-sm text-[#a1a1aa]">{window_.label}</p>
+              <p className="text-xs text-[#71717a]">
+                {plan.title} · {archetype.name} vibe
+              </p>
             </div>
 
-            {accommodation && (
+            {(accommodation || chosenHotel) && (
               <div className="rounded-2xl p-3 flex items-center gap-3" style={{ background: "#0a0a0b", border: "1px solid #27272a" }}>
                 <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center" style={{ background: "linear-gradient(145deg, #22261a 0%, #18181b 60%, #111015 100%)" }}>
-                  {accommodation.image ? (
+                  {accommodation?.image ? (
                     // eslint-disable-next-line @next/next/no-img-element -- thumbnail can be any external Stay22 CDN host
                     <img src={accommodation.image} alt={accommodation.name} className="w-full h-full object-cover" />
                   ) : (
                     <span className="font-serif text-lg" style={{ color: "rgba(220,255,115,0.35)" }}>
-                      {accommodation.name.charAt(0).toUpperCase()}
+                      {(accommodation?.name ?? chosenHotel?.name ?? "?").charAt(0).toUpperCase()}
                     </span>
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-[#f5f5f4] truncate">{accommodation.name}</p>
-                  <p className="text-[10px] text-[#a1a1aa] truncate">{accommodation.location}</p>
+                  <p className="text-xs font-medium text-[#f5f5f4] truncate">
+                    {accommodation?.name ?? chosenHotel?.name}
+                  </p>
+                  <p className="text-[10px] text-[#a1a1aa] truncate">
+                    {accommodation?.location ?? `${chosenHotel?.neighborhood}, ${destination.name}`}
+                  </p>
                 </div>
               </div>
             )}
 
             <div className="space-y-1.5">
-              {itinerary.map((activity, i) => (
-                <div key={i} className="flex gap-2 text-xs text-[#a1a1aa]">
-                  <span style={{ color: "#dcff73" }}>Day {activity.day}</span>
-                  <span>{activity.title}</span>
+              {plan.days.map((day) => (
+                <div key={day.day} className="flex gap-2 text-xs text-[#a1a1aa]">
+                  <span style={{ color: "#dcff73" }} className="flex-shrink-0">
+                    Day {day.day}
+                  </span>
+                  <span className="truncate">{day.label} — {day.activities[0]?.title}</span>
                 </div>
               ))}
             </div>

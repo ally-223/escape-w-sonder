@@ -3,6 +3,12 @@
  * This whole `escape` tree is additive and isolated from the rest of Sonder;
  * nothing here is imported by, or imports from, the main app's schemas.
  */
+import type {
+  AccommodationStyle,
+  CatalogDestinationId,
+  CravingTag,
+  ItineraryStructure,
+} from "./data/schema";
 
 /** Each of the 10 personality dimensions is a 0-100 slider/binary value. */
 export type DimensionKey =
@@ -38,43 +44,34 @@ export interface Archetype {
   centroid: SurveyAnswers;
 }
 
-export type BudgetRange = "$150-300" | "$300-400" | "$400-600" | "$600+";
-export type TripVibe =
-  | "cafés & art"
-  | "nightlife & energy"
-  | "nature & quiet"
-  | "food & culture";
-export type TripFeel = "relaxing" | "thrilling" | "spontaneous" | "nostalgic";
-export type TripPersonality =
-  | "adventurous"
-  | "laid-back"
-  | "curious"
-  | "sociable";
+/** Fill-in-the-blank options — display strings shown inside the sentence. */
+export type AvailabilityStart =
+  | "Friday afternoon"
+  | "Friday evening"
+  | "Saturday morning"
+  | "Saturday afternoon";
+export type AvailabilityEnd =
+  | "Saturday evening"
+  | "Sunday afternoon"
+  | "Sunday evening"
+  | "Monday morning";
+export type Companionship = "my friends" | "compatible new people" | "a mix of both" | "surprise me";
+export type BudgetRange = "Under $200" | "$200–300" | "$300–400" | "$400–600" | "$600+";
+export type TravelDistance = "1 hour away" | "3 hours away" | "5 hours away" | "anywhere reachable";
 
-/** The fill-in-the-blank sentence screen. `companionship` doubles as the
- * friends-vs-compatible-people mode selector. */
+/** The fill-in-the-blank sentence, one field per blank. `companionship`
+ * doubles as the friends-vs-compatible-people mode selector. */
 export interface TripPreferences {
-  pace: "spontaneous" | "planned";
-  companionship: "new_people" | "friends";
-  personality: TripPersonality;
+  availabilityStart: AvailabilityStart;
+  availabilityEnd: AvailabilityEnd;
+  companionship: Companionship;
   budget: BudgetRange;
-  vibe: TripVibe;
-  feel: TripFeel;
-  /** Trip length in nights, always a weekend escape for this prototype. */
-  nights: 2;
+  maxTravel: TravelDistance;
+  accommodationStyle: AccommodationStyle;
+  /** Up to 3; empty array means "surprise me". */
+  cravings: CravingTag[];
+  structure: ItineraryStructure;
   groupSize: number;
-}
-
-export type DestinationId = "montreal" | "toronto" | "niagara-falls";
-
-export interface Destination {
-  id: DestinationId;
-  name: string;
-  province: string;
-  description: string;
-  heroImage: string;
-  /** Rough monthly 1BR rent used only for the rent-vs-escape stat. */
-  approxMonthlyRent: number;
 }
 
 export interface Accommodation {
@@ -88,22 +85,6 @@ export interface Accommodation {
   bookingUrl: string;
   provider: string;
   source: "stay22" | "fallback";
-}
-
-export interface ItineraryActivity {
-  slot: "signature" | "food" | "social";
-  day: 1 | 2;
-  title: string;
-  description: string;
-}
-
-export interface CostBreakdown {
-  accommodationPerPerson: number;
-  transportPerPerson: number;
-  foodAndActivitiesPerPerson: number;
-  totalPerPerson: number;
-  groupSize: number;
-  accommodationTotal: number;
 }
 
 export interface RentVsEscapeStat {
@@ -121,14 +102,6 @@ export interface CompatibleProfile {
   reasons: [string, string];
 }
 
-/**
- * The full generated trip, encoded straight into the URL (base64url JSON)
- * so a "shareable link" genuinely works for anyone who opens it — no
- * backend, no auth, no database row required. Archetype and destination
- * are intentionally NOT stored here; they're derived deterministically
- * from `answers` + `preferences` on every load (see deriveTrip.ts), so
- * there's a single source of truth and a shorter URL.
- */
 /** The user's lightweight escape profile — chosen during the post-survey
  * "pick your blob" step, mirroring Sonder's ProfileCard. */
 export interface EscapeProfile {
@@ -137,9 +110,19 @@ export interface EscapeProfile {
   pfp: string;
 }
 
+/**
+ * The full generated trip, encoded straight into the URL (base64url JSON)
+ * so a "shareable link" genuinely works for anyone who opens it — no
+ * backend, no auth, no database row required. The archetype stays derived
+ * from `answers`; the destination/plan/hotel are STORED because the user
+ * now picks one of three revealed options — a choice can't be re-derived.
+ */
 export interface TripResult {
   preferences: TripPreferences;
   answers: SurveyAnswers;
+  destinationId: CatalogDestinationId;
+  planId: string;
+  hotelId: string;
   /** Optional so links generated before this field existed still decode. */
   profile?: EscapeProfile;
   createdAt: number;
@@ -147,5 +130,4 @@ export interface TripResult {
 
 export interface DerivedTrip extends TripResult {
   archetypeId: ArchetypeId;
-  destinationId: DestinationId;
 }

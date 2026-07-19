@@ -1,32 +1,40 @@
-import type {
-  Accommodation,
-  CostBreakdown,
-  Destination,
-  RentVsEscapeStat,
-} from "./types";
+import type { TripPlan } from "./data/schema";
+import type { RentVsEscapeStat } from "./types";
 
-const NIGHTS = 2;
-/** Flat per-person estimate for regional transport (bus/train share or gas split). */
-const TRANSPORT_PER_PERSON = 45;
-/** Flat per-person estimate covering food + activities across the weekend. */
-const FOOD_AND_ACTIVITIES_PER_PERSON = 130;
+export interface TripCostBreakdown {
+  accommodationPerPerson: number;
+  accommodationTotal: number;
+  transportPerPerson: number;
+  foodPerPerson: number;
+  activitiesPerPerson: number;
+  totalPerPerson: number;
+  groupSize: number;
+  nights: number;
+}
 
-export function calculateCost(
-  accommodation: Accommodation,
-  groupSize: number,
-): CostBreakdown {
-  const accommodationTotal = accommodation.pricePerNightTotal * NIGHTS;
-  const accommodationPerPerson = accommodationTotal / groupSize;
-
+/** Transparent per-person math: hotel share + transport + the selected
+ * plan's meal and activity estimates. `nightlyPrice` can come from live
+ * Stay22 data or the catalog's mock hotel — same formula either way. */
+export function calculateTripCost(args: {
+  nightlyPrice: number;
+  nights: number;
+  groupSize: number;
+  transportPerPerson: number;
+  plan: TripPlan;
+}): TripCostBreakdown {
+  const { nightlyPrice, nights, groupSize, transportPerPerson, plan } = args;
+  const accommodationTotal = nightlyPrice * Math.max(1, nights);
+  const accommodationPerPerson = Math.round(accommodationTotal / groupSize);
   return {
+    accommodationPerPerson,
     accommodationTotal,
-    accommodationPerPerson: Math.round(accommodationPerPerson),
-    transportPerPerson: TRANSPORT_PER_PERSON,
-    foodAndActivitiesPerPerson: FOOD_AND_ACTIVITIES_PER_PERSON,
-    totalPerPerson: Math.round(
-      accommodationPerPerson + TRANSPORT_PER_PERSON + FOOD_AND_ACTIVITIES_PER_PERSON,
-    ),
+    transportPerPerson,
+    foodPerPerson: plan.mealCostPerPerson,
+    activitiesPerPerson: plan.activityCostPerPerson,
+    totalPerPerson:
+      accommodationPerPerson + transportPerPerson + plan.mealCostPerPerson + plan.activityCostPerPerson,
     groupSize,
+    nights,
   };
 }
 
@@ -37,15 +45,15 @@ export function calculateCost(
  * no extra API calls.
  */
 export function rentVsEscape(
-  accommodation: Accommodation,
-  destination: Destination,
+  nightlyPrice: number,
+  destination: { name: string; approxMonthlyRent: number },
 ): RentVsEscapeStat {
-  const monthlyEquivalent = Math.round(accommodation.pricePerNightTotal * 30);
+  const monthlyEquivalent = Math.round(nightlyPrice * 30);
   const cityRent = destination.approxMonthlyRent;
 
   const message =
     monthlyEquivalent <= cityRent
-      ? `At this nightly rate, living here full-time would run ~$${monthlyEquivalent.toLocaleString()}/mo — about what a 1BR near campus costs in ${destination.name} anyway.`
+      ? `At this nightly rate, living here full-time would run ~$${monthlyEquivalent.toLocaleString()}/mo — about what a 1BR costs in ${destination.name} anyway.`
       : `At this nightly rate, living here full-time would run ~$${monthlyEquivalent.toLocaleString()}/mo — more than a 1BR in ${destination.name}. Good thing it's just a weekend.`;
 
   return { monthlyEquivalent, cityRent, message };
