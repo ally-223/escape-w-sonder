@@ -129,13 +129,28 @@ function TripContent() {
   const activityLimit = ({ "very relaxing": 1, relaxing: 2, balanced: 3, lively: 4, packed: Number.POSITIVE_INFINITY } as const)[derived.preferences.pace] ?? Number.POSITIVE_INFINITY;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] text-[#f5f5f4] pb-24 grain-overlay">
+    <div className="relative min-h-screen bg-[#b7a58c] text-[#f5f5f4] pb-24 grain-overlay overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-fixed"
+        style={{ backgroundImage: "url(/surveybg.png)" }}
+        aria-hidden="true"
+      />
+      <div className="absolute inset-0 bg-black/60" aria-hidden="true" />
+
       <div className="relative w-full h-64 md:h-80">
-        <Image src={destination.heroImage} alt={destination.name} fill className="object-cover" priority />
         <div
           className="absolute inset-0"
-          style={{ background: "linear-gradient(180deg, rgba(10,10,11,0.2) 0%, #0a0a0b 100%)" }}
-        />
+          style={{
+            maskImage: "linear-gradient(180deg, black 55%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(180deg, black 55%, transparent 100%)",
+          }}
+        >
+          <Image src={destination.heroImage} alt={destination.name} fill className="object-cover" priority />
+          <div
+            className="absolute inset-0"
+            style={{ background: "linear-gradient(180deg, rgba(10,10,11,0.2) 0%, rgba(10,10,11,0.45) 100%)" }}
+          />
+        </div>
         <Link
           href="/escape"
           className="absolute top-6 left-6 text-xs px-3 py-1.5 rounded-full backdrop-blur-sm"
@@ -154,7 +169,7 @@ function TripContent() {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-6 space-y-14 mt-10">
+      <div className="relative max-w-3xl mx-auto px-6 space-y-14 mt-10">
         <section className="space-y-4">
           <h2 className="text-lg font-serif font-light">Where you&apos;re staying</h2>
           {primary ? (
