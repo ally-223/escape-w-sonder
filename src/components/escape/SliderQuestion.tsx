@@ -6,6 +6,7 @@ interface SliderQuestionProps {
   question: string;
   minLabel: string;
   maxLabel: string;
+  middleLabel?: string;
   min?: number;
   max?: number;
   step?: number;
@@ -17,6 +18,7 @@ export default function SliderQuestion({
   question,
   minLabel,
   maxLabel,
+  middleLabel,
   min = 0,
   max = 100,
   step = 1,
@@ -75,9 +77,10 @@ export default function SliderQuestion({
           />
         </div>
 
-        <div className="flex justify-between text-sm text-white/60">
-          <span>{minLabel}</span>
-          <span>{maxLabel}</span>
+        <div className="grid grid-cols-3 gap-3 text-xs md:text-sm text-white/60">
+          <span className="text-left">{minLabel}</span>
+          <span className="text-center">{middleLabel}</span>
+          <span className="text-right">{maxLabel}</span>
         </div>
       </div>
     </div>

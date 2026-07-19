@@ -1,8 +1,3 @@
-/**
- * Sonder Escape — shared types.
- * This whole `escape` tree is additive and isolated from the rest of Sonder;
- * nothing here is imported by, or imports from, the main app's schemas.
- */
 import type {
   AccommodationStyle,
   CatalogDestinationId,
@@ -10,21 +5,45 @@ import type {
   ItineraryStructure,
 } from "./data/schema";
 
-/** Each of the 10 personality dimensions is a 0-100 slider/binary value. */
-export type DimensionKey =
-  | "introversion" // 0 introverted <-> 100 extroverted
-  | "planning" // 0 detailed planner <-> 100 spontaneous
-  | "pace" // 0 relaxed <-> 100 packed itinerary
-  | "novelty" // 0 familiar favourites <-> 100 new experiences
-  | "groupSize" // 0 small intimate group <-> 100 larger social group
-  | "nightlife" // 0 quiet evenings <-> 100 nightlife
-  | "setting" // 0 nature <-> 100 city
-  | "spend" // 0 budget-conscious <-> 100 willing to splurge
-  | "togetherness" // 0 independent time <-> 100 doing everything together
-  | "adventure"; // 0 comfort-focused <-> 100 adventure-focused
+export type GroupRole = "organizer" | "connector" | "energy" | "observer" | "flexible";
+export type ConversationStyle =
+  | "playful"
+  | "deep"
+  | "ideas"
+  | "stories"
+  | "interests"
+  | "quiet"
+  | "debates"
+  | "variety";
+export type SocialRhythm = "together" | "balanced" | "smallGroups" | "independent";
 
-export type SurveyAnswers = Record<DimensionKey, number>;
+export interface SurveyAnswers {
+  socialInitiation: number;
+  groupRole: GroupRole;
+  conversationStyles: ConversationStyle[];
+  decisionMaking: number;
+  socialRhythm: SocialRhythm;
+  openness: number;
+}
 
+export type PersonalityTypeId =
+  | "socialCatalyst"
+  | "warmConnector"
+  | "spontaneousExplorer"
+  | "thoughtfulObserver"
+  | "steadyPlanner"
+  | "easygoingCompanion"
+  | "deepConversationalist"
+  | "independentWanderer";
+
+export type PersonalityType = {
+  id: PersonalityTypeId;
+  name: string;
+  shortDescription: string;
+  strengths: string[];
+};
+
+/** Legacy recommendation buckets used only by the existing destination catalog. */
 export type ArchetypeId =
   | "curious-connector"
   | "cozy-wanderer"
@@ -33,18 +52,6 @@ export type ArchetypeId =
   | "chaos-tourist"
   | "culture-collector";
 
-export interface Archetype {
-  id: ArchetypeId;
-  name: string;
-  tagline: string;
-  traits: [string, string, string];
-  /** Mascot image reused from Sonder's existing blob art. */
-  image: string;
-  /** Ideal 0-100 profile per dimension, used for nearest-centroid scoring. */
-  centroid: SurveyAnswers;
-}
-
-/** Fill-in-the-blank options — display strings shown inside the sentence. */
 export type AvailabilityStart =
   | "Friday afternoon"
   | "Friday evening"
@@ -56,19 +63,36 @@ export type AvailabilityEnd =
   | "Sunday evening"
   | "Monday morning";
 export type Companionship = "my friends" | "compatible new people" | "a mix of both" | "surprise me";
-export type BudgetRange = "Under $200" | "$200–300" | "$300–400" | "$400–600" | "$600+";
+export type BudgetRange = "Under $200" | "$200–300" | "$300–400" | "$400–600" | "$600+" | "Flexible";
 export type TravelDistance = "1 hour away" | "3 hours away" | "5 hours away" | "anywhere reachable";
 
-/** The fill-in-the-blank sentence, one field per blank. `companionship`
- * doubles as the friends-vs-compatible-people mode selector. */
+export type TripStyle = "carefully planned" | "lightly planned" | "spontaneous" | "surprise me";
+export type TravelParty = "my friends" | "new people" | "a mix of both" | "I’m open to either";
+export type GroupPersonality = "adventurous" | "easygoing" | "social" | "thoughtful" | "curious" | "playful";
+export type TripVibe =
+  | "cafés & art"
+  | "food & nightlife"
+  | "nature & wellness"
+  | "active & outdoors"
+  | "local hidden gems"
+  | "classic sightseeing"
+  | "a little of everything"
+  | "surprise me";
+export type TripPace = "very relaxing" | "relaxing" | "balanced" | "lively" | "packed";
+
+/** Six visible blanks plus deterministic internal fields consumed by the existing recommender. */
 export interface TripPreferences {
+  tripStyle: TripStyle;
+  travelParty: TravelParty;
+  groupPersonality: GroupPersonality;
+  budget: BudgetRange;
+  tripVibe: TripVibe;
+  pace: TripPace;
   availabilityStart: AvailabilityStart;
   availabilityEnd: AvailabilityEnd;
   companionship: Companionship;
-  budget: BudgetRange;
   maxTravel: TravelDistance;
   accommodationStyle: AccommodationStyle;
-  /** Up to 3; empty array means "surprise me". */
   cravings: CravingTag[];
   structure: ItineraryStructure;
   groupSize: number;
@@ -79,9 +103,9 @@ export interface Accommodation {
   name: string;
   location: string;
   image: string;
-  ratingValue: number; // 0-10 Stay22-style guest rating
+  ratingValue: number;
   ratingCount: number;
-  pricePerNightTotal: number; // total nightly rate for the room (not per person)
+  pricePerNightTotal: number;
   bookingUrl: string;
   provider: string;
   source: "stay22" | "fallback";
@@ -98,36 +122,31 @@ export interface CompatibleProfile {
   firstName: string;
   avatar: string;
   bio: string;
-  compatibility: number; // 0-100
+  personalityId: PersonalityTypeId;
+  personalityName: string;
+  strengths: string[];
+  compatibility: number;
   reasons: [string, string];
+  groupPersonalityTags: GroupPersonality[];
 }
 
-/** The user's lightweight escape profile — chosen during the post-survey
- * "pick your blob" step, mirroring Sonder's ProfileCard. */
 export interface EscapeProfile {
   name: string;
-  /** One of Sonder's blob avatars, e.g. "pfp3". */
   pfp: string;
 }
 
-/**
- * The full generated trip, encoded straight into the URL (base64url JSON)
- * so a "shareable link" genuinely works for anyone who opens it — no
- * backend, no auth, no database row required. The archetype stays derived
- * from `answers`; the destination/plan/hotel are STORED because the user
- * now picks one of three revealed options — a choice can't be re-derived.
- */
 export interface TripResult {
   preferences: TripPreferences;
   answers: SurveyAnswers;
   destinationId: CatalogDestinationId;
   planId: string;
   hotelId: string;
-  /** Optional so links generated before this field existed still decode. */
   profile?: EscapeProfile;
+  selectedProfileIds?: string[];
   createdAt: number;
 }
 
 export interface DerivedTrip extends TripResult {
   archetypeId: ArchetypeId;
+  personalityType: PersonalityType;
 }

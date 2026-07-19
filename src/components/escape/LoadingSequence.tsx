@@ -12,7 +12,7 @@ const MESSAGES = [
   "Building your mystery escape…",
 ];
 
-const STEP_DURATION_MS = 650;
+const STEP_DURATION_MS = 300;
 
 interface LoadingSequenceProps {
   onComplete: () => void;

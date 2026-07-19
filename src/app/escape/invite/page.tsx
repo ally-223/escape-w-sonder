@@ -7,7 +7,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { decodeTrip } from "@/lib/escape/tripEncoding";
 import { deriveTrip } from "@/lib/escape/deriveTrip";
-import { ARCHETYPES } from "@/lib/escape/archetypes";
+import { SEED_PROFILES } from "@/lib/escape/mockProfiles";
+import { PERSONALITY_TYPES } from "@/lib/escape/personalities";
 import { CATALOG_BY_ID } from "@/lib/escape/data/catalog";
 import { calculateTripCost } from "@/lib/escape/costCalculator";
 import { availabilityWindow } from "@/lib/escape/dates";
@@ -69,7 +70,10 @@ function InviteContent() {
     );
   }
 
-  const archetype = derived ? ARCHETYPES[derived.archetypeId] : null;
+  const personality = derived?.personalityType ?? null;
+  const selectedPeople = derived
+    ? SEED_PROFILES.filter((profile) => derived.selectedProfileIds?.includes(profile.id))
+    : [];
   const plan = destination && derived
     ? destination.plans.find((p) => p.id === derived.planId) ?? destination.plans[0]
     : null;
@@ -110,7 +114,7 @@ function InviteContent() {
           </div>
         )}
 
-        {status === "ready" && derived && archetype && destination && plan && window_ && (
+        {status === "ready" && derived && personality && destination && plan && window_ && (
           <div
             className="rounded-3xl p-8 space-y-6"
             style={{
@@ -120,8 +124,13 @@ function InviteContent() {
             }}
           >
             <div className="text-center space-y-3">
-              <div className="w-14 h-14 mx-auto flex items-center justify-center">
-                <Image src="/flat_logo.png" alt="Sonder logo" width={56} height={56} className="object-contain" />
+              <div className="relative w-14 h-14 mx-auto overflow-hidden rounded-full flex items-center justify-center">
+                <Image
+                  src={derived.profile?.pfp ? `/${derived.profile.pfp}.png` : "/flat_logo.png"}
+                  alt={derived.profile?.name ?? "Sonder logo"}
+                  fill
+                  className="object-contain"
+                />
               </div>
               <p className="text-[10px] tracking-[0.22em] uppercase font-medium" style={{ color: "#dcff73" }}>
                 {derived.profile?.name
@@ -131,7 +140,7 @@ function InviteContent() {
               <h1 className="text-2xl font-serif font-light text-white">{destination.name}</h1>
               <p className="text-sm text-[#a1a1aa]">{window_.label}</p>
               <p className="text-xs text-[#71717a]">
-                {plan.title} · {archetype.name} vibe
+                {plan.title} · {personality.name} vibe
               </p>
             </div>
 
@@ -168,6 +177,23 @@ function InviteContent() {
                 </div>
               ))}
             </div>
+
+            {selectedPeople.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-[#71717a]">People already added</p>
+                {selectedPeople.map((person) => (
+                  <div key={person.id} className="flex items-center gap-3 rounded-xl border border-[#27272a] bg-[#0a0a0b] p-2.5">
+                    <div className="relative h-9 w-9 overflow-hidden rounded-full">
+                      <Image src={person.avatar} alt={person.firstName} fill className="object-cover" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-white">{person.firstName}</p>
+                      <p className="text-[10px] text-[#a1a1aa]">{PERSONALITY_TYPES[person.personalityId].name}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {cost && (
               <div className="flex justify-between text-sm pt-1" style={{ borderTop: "1px solid #27272a" }}>

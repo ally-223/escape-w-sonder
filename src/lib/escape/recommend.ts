@@ -27,6 +27,8 @@ export interface RecommendInput {
   /** Nights available. Derived from the dates when omitted. */
   tripNights?: number;
   budgetPerPerson: number;
+  /** Flexible budgets skip hard exclusion and favor the lowest-cost fitting stay. */
+  budgetFlexible?: boolean;
   /** Max one-way travel hours the user will tolerate. Infinity = anywhere. */
   maxTravelHours: number;
   cravings: CravingTag[];
@@ -86,6 +88,7 @@ export const BUDGET_MIDPOINTS: Record<BudgetRange, number> = {
   "$300–400": 350,
   "$400–600": 500,
   "$600+": 700,
+  Flexible: 400,
 };
 
 const TRAVEL_HOURS: Record<TravelDistance, number> = {
@@ -106,6 +109,7 @@ export function preferencesToInput(
     endDateTime: window.endISO,
     tripNights: window.nights,
     budgetPerPerson: BUDGET_MIDPOINTS[preferences.budget],
+    budgetFlexible: preferences.budget === "Flexible",
     maxTravelHours: TRAVEL_HOURS[preferences.maxTravel],
     cravings: preferences.cravings,
     accommodationStyle: preferences.accommodationStyle,
@@ -192,7 +196,14 @@ function selectHotel(
   style: AccommodationStyle,
   budget: number,
   nights: number,
+  budgetFlexible = false,
 ): HotelOption {
+  if (budgetFlexible) {
+    return [...destination.hotels].sort(
+      (a, b) => tripTotal(destination, a, plan, nights).total - tripTotal(destination, b, plan, nights).total,
+    )[0];
+  }
+
   const order = STYLE_TIER_PREFERENCE[style];
   const byTier = (tier: HotelTier) => destination.hotels.find((h) => h.tier === tier)!;
 
@@ -247,7 +258,9 @@ function scoreDestination(
 
   const { weekendBudgetMinPerPerson: min, weekendBudgetMaxPerPerson: max } = destination;
   const mid = (min + max) / 2;
-  const budgetCloseness = 1 - Math.min(1, Math.abs(input.budgetPerPerson - mid) / (max - min));
+  const budgetCloseness = input.budgetFlexible
+    ? Math.max(0, 1 - min / 800)
+    : 1 - Math.min(1, Math.abs(input.budgetPerPerson - mid) / (max - min));
   const budgetFit = budgetCloseness * WEIGHTS.budgetFit;
 
   const travelEase =
@@ -341,7 +354,7 @@ export function recommend(rawInput: RecommendInput): RecommendResult {
       continue;
     }
     const overTravel = destination.oneWayTravelHours > input.maxTravelHours;
-    const overBudget = destination.weekendBudgetMinPerPerson > input.budgetPerPerson;
+    const overBudget = !input.budgetFlexible && destination.weekendBudgetMinPerPerson > input.budgetPerPerson;
     if (overTravel) {
       exclusions.push({
         destinationId: destination.id,
@@ -372,7 +385,7 @@ export function recommend(rawInput: RecommendInput): RecommendResult {
     relaxed?: Recommendation["relaxedConstraint"],
   ): Recommendation => {
     const plan = selectPlan(destination, input.cravings, input.itineraryStructure, input.archetypeId);
-    const hotel = selectHotel(destination, plan, input.accommodationStyle, input.budgetPerPerson, tripNights);
+    const hotel = selectHotel(destination, plan, input.accommodationStyle, input.budgetPerPerson, tripNights, input.budgetFlexible);
     const cost = tripTotal(destination, hotel, plan, tripNights);
     const score = scoreDestination(destination, input);
     return { destination, hotel, plan, cost, score, reasons: buildReasons(destination, input, cost, relaxed), relaxedConstraint: relaxed };

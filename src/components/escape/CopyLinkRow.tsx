@@ -3,33 +3,46 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-export default function CopyLinkRow({ link }: { link: string }) {
-  const [copied, setCopied] = useState(false);
+interface CopyLinkRowProps {
+  link: string;
+  title?: string;
+}
 
-  const handleCopy = async () => {
+export default function CopyLinkRow({ link, title = "Join my Sonder Escape" }: CopyLinkRowProps) {
+  const [shared, setShared] = useState(false);
+
+  const copy = async () => {
     await navigator.clipboard.writeText(link);
-    setCopied(true);
-    toast.success("Link copied");
-    setTimeout(() => setCopied(false), 2000);
+    setShared(true);
+    toast.success("Trip link copied");
+    setTimeout(() => setShared(false), 2000);
+  };
+
+  const handleShare = async () => {
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title, text: "I found a weekend escape for us.", url: link });
+        toast.success("Trip shared");
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+    await copy();
   };
 
   return (
-    <div
-      className="flex items-center gap-2 rounded-2xl p-2 pl-4"
-      style={{ background: "#18181b", border: "1px solid #27272a" }}
-    >
-      <span className="text-xs text-[#a1a1aa] truncate flex-1">{link}</span>
+    <div className="space-y-2">
       <button
-        onClick={handleCopy}
-        className="rounded-full px-4 py-2 text-xs font-medium whitespace-nowrap transition-colors"
-        style={
-          copied
-            ? { background: "#18181b", color: "#dcff73", border: "1px solid rgba(220,255,115,0.5)" }
-            : { background: "#dcff73", color: "#0a0a0b" }
-        }
+        type="button"
+        onClick={handleShare}
+        className="w-full rounded-full px-6 py-3 text-sm font-medium tracking-[0.12em] transition-transform hover:scale-[1.01] bg-[#dcff73] text-[#0a0a0b]"
       >
-        {copied ? "Copied!" : "Copy link"}
+        {shared ? "Trip link copied!" : "Share trip with a friend"}
       </button>
+      <div className="rounded-xl border border-[#27272a] bg-[#18181b] px-3 py-2 text-center">
+        <span className="block truncate text-[10px] text-[#71717a]">{link}</span>
+      </div>
     </div>
   );
 }

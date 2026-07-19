@@ -71,7 +71,9 @@ export default function EscapeStartPage() {
           className="relative w-full flex justify-center"
         >
           {stage === "survey" && <SurveyStep onComplete={handleSurveyComplete} />}
-          {stage === "trip-type" && <TripTypeStep onComplete={handleTripTypeComplete} />}
+          {stage === "trip-type" && answers && (
+            <TripTypeStep answers={answers} onComplete={handleTripTypeComplete} />
+          )}
         </motion.div>
       </div>
     );
