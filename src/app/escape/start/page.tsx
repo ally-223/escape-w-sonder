@@ -80,18 +80,20 @@ export default function EscapeStartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] text-[#f5f5f4] flex flex-col items-center justify-center p-6 relative selection:bg-[#dcff73]/30 grain-overlay">
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#dcff73]/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-[#b7a58c]/5 rounded-full blur-[120px]" />
-      </div>
+    <div className="relative min-h-screen bg-[#b7a58c] text-[#f5f5f4] flex flex-col items-center justify-center p-6 selection:bg-[#dcff73]/30 overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-fixed"
+        style={{ backgroundImage: "url(/surveybg.png)" }}
+        aria-hidden="true"
+      />
+      <div className="absolute inset-0 bg-black/60" />
 
       <motion.div
         key={stage}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className="w-full"
+        className="relative w-full"
       >
         {stage === "loading" && <LoadingSequence onComplete={() => setStage("reveal")} />}
         {stage === "reveal" && preferences && (

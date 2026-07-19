@@ -26,7 +26,7 @@ export const kingston: DestinationRecord = {
   archetypes: ["culture-collector", "curious-connector", "social-explorer", "cozy-wanderer"],
   description: "A limestone university town where the lake, the history, and the pub density all peak downtown.",
   whyItFits: "Student-city energy in someone else's student city — walkable, historic, and easy by train.",
-  heroImage: "/claymuseum3.png",
+  heroImage: "/cities/kingston.jpg",
   approxMonthlyRent: 1700,
   hotels: [
     {

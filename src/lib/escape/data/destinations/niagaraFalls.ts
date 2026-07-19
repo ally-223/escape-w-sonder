@@ -26,7 +26,7 @@ export const niagaraFalls: DestinationRecord = {
   archetypes: ["intentional-adventurer", "chaos-tourist", "social-explorer", "cozy-wanderer"],
   description: "Slow mornings, thundering water, and a strip of glorious kitsch — nowhere you actually need to be.",
   whyItFits: "The classic first escape: under two hours out, huge payoff, works even for a single night.",
-  heroImage: "/startpolaroid3.png",
+  heroImage: "/cities/niagaraFalls.jpg",
   approxMonthlyRent: 1550,
   hotels: [
     {

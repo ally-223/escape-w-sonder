@@ -26,7 +26,7 @@ export const montreal: DestinationRecord = {
   archetypes: ["chaos-tourist", "social-explorer", "culture-collector", "curious-connector"],
   description: "Cafés, murals, and a food scene that rewards wandering without a plan.",
   whyItFits: "The classic student pilgrimage: Europe's energy at a train ticket's distance, best consumed with loose plans.",
-  heroImage: "/startpolaroid1.png",
+  heroImage: "/cities/montreal.jpg",
   approxMonthlyRent: 1850,
   hotels: [
     {

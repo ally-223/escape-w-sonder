@@ -25,7 +25,7 @@ export const princeEdwardCounty: DestinationRecord = {
   archetypes: ["cozy-wanderer", "culture-collector", "curious-connector"],
   description: "Sand dunes, back-road wineries, and barn galleries — the county runs on golden hour.",
   whyItFits: "The slow-weekend capital of Ontario: beaches and tastings with zero urban noise.",
-  heroImage: "/surveybg.png",
+  heroImage: "/cities/princeEdwardCounty.jpg",
   approxMonthlyRent: 1750,
   hotels: [
     {

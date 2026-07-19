@@ -26,7 +26,7 @@ export const ottawa: DestinationRecord = {
   archetypes: ["culture-collector", "intentional-adventurer", "curious-connector"],
   description: "The capital's museum row, canal paths, and ByWard Market — free national landmarks in every direction.",
   whyItFits: "The most culture per dollar in the country: half the headline attractions cost nothing.",
-  heroImage: "/start2_bg.png",
+  heroImage: "/cities/ottawa.jpg",
   approxMonthlyRent: 2000,
   hotels: [
     {

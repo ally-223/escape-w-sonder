@@ -25,7 +25,7 @@ export const blueMountain: DestinationRecord = {
   archetypes: ["intentional-adventurer", "social-explorer", "cozy-wanderer", "chaos-tourist"],
   description: "Ontario's mountain village — trails and bay views in summer, runs and après in winter, spa water year-round.",
   whyItFits: "The most 'we actually went somewhere' feeling per hour of driving in the province.",
-  heroImage: "/start_bg.png",
+  heroImage: "/cities/blueMountain.jpg",
   approxMonthlyRent: 2100,
   hotels: [
     {

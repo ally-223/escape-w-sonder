@@ -25,7 +25,7 @@ export const quebecCity: DestinationRecord = {
   archetypes: ["culture-collector", "cozy-wanderer", "intentional-adventurer"],
   description: "North America's only walled city — 400-year-old streets, copper roofs, and a waterfall taller than Niagara next door.",
   whyItFits: "The furthest-flung option and the most transporting: a long-weekend trip that feels like leaving the continent.",
-  heroImage: "/surveypaper.png",
+  heroImage: "/cities/quebecCity.jpg",
   approxMonthlyRent: 1450,
   hotels: [
     {

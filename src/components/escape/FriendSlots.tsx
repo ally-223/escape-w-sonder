@@ -24,10 +24,11 @@ export default function FriendSlots({ groupSize, profile, selectedProfiles = [] 
 
       {selectedProfiles.map((selected) => (
         <div key={selected.id} className="flex flex-col items-center gap-1.5">
-          <div className="w-14 h-14 rounded-full overflow-hidden relative border-2 border-white/40">
+          <div className="w-14 h-14 rounded-full overflow-hidden relative border-2 border-dashed border-white/40 opacity-70">
             <Image src={selected.avatar} alt={selected.firstName} fill className="object-cover" />
           </div>
           <span className="text-[10px] text-[#a1a1aa]">{selected.firstName}</span>
+          <span className="text-[9px] italic text-[#71717a] -mt-1">pending acceptance</span>
         </div>
       ))}
 

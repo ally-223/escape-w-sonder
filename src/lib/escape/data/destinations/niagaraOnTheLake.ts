@@ -25,7 +25,7 @@ export const niagaraOnTheLake: DestinationRecord = {
   archetypes: ["cozy-wanderer", "culture-collector", "curious-connector"],
   description: "Wine country's storybook main street — vineyards, theatre, and the slowest afternoons in Ontario.",
   whyItFits: "Under two hours out but feels like a different century; built for groups who measure a weekend in long meals.",
-  heroImage: "/startpolaroid4.png",
+  heroImage: "/cities/niagaraOnTheLake.jpg",
   approxMonthlyRent: 1900,
   hotels: [
     {

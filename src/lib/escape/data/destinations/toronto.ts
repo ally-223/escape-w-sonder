@@ -39,7 +39,7 @@ export const toronto: DestinationRecord = {
   archetypes: ["social-explorer", "chaos-tourist", "curious-connector", "culture-collector"],
   description: "Your own city, but as a tourist — a staycation where the commute is a streetcar ride.",
   whyItFits: "Maximum escape per dollar: no travel time, no travel cost, and every neighbourhood is a different trip.",
-  heroImage: "/startpolaroid2.png",
+  heroImage: "/cities/toronto.jpg",
   approxMonthlyRent: 2450,
   hotels: [
     {

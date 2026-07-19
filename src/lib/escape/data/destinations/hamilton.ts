@@ -25,7 +25,7 @@ export const hamilton: DestinationRecord = {
   archetypes: ["culture-collector", "intentional-adventurer", "curious-connector", "chaos-tourist"],
   description: "Steel-town grit turned arts scene, ringed by a hundred waterfalls nobody brags about enough.",
   whyItFits: "The closest full change of scenery to campus — cheap, close, and genuinely surprising.",
-  heroImage: "/claymuseum1.png",
+  heroImage: "/cities/hamilton.jpg",
   approxMonthlyRent: 1800,
   hotels: [
     {
